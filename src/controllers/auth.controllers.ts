@@ -1,11 +1,7 @@
 import { Request, Response } from "express";
 import bcryptjs from "bcryptjs";
 import { dataBase } from "../db";
-<<<<<<< HEAD
 import { QueryError, ResultSetHeader, RowDataPacket } from "mysql2";
-=======
-import { OkPacket, QueryError } from "mysql2";
->>>>>>> 7445faf84fbc80aa5aeceb588391c296498f7f9f
 import { createAccessToken } from "../libs/jwt";
 
 export const register = async (req: Request, res: Response) => {
@@ -18,11 +14,7 @@ export const register = async (req: Request, res: Response) => {
       `INSERT INTO users(username, email, password) VALUES (?, ?, ?)`,
       [username, email, passwordHash]
     );
-<<<<<<< HEAD
     const result = rows as ResultSetHeader;
-=======
-    const result = rows as OkPacket;
->>>>>>> 7445faf84fbc80aa5aeceb588391c296498f7f9f
     const token = await createAccessToken({ id: result.insertId });
 
     res.cookie("token", token);
