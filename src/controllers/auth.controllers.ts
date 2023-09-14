@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import bcryptjs from "bcryptjs";
 import { dataBase } from "../db";
-import { QueryError, ResultSetHeader } from "mysql2";
+import { QueryError, ResultSetHeader, RowDataPacket } from "mysql2";
 import { createAccessToken } from "../libs/jwt";
 
 export const register = async (req: Request, res: Response) => {
@@ -28,4 +28,17 @@ export const register = async (req: Request, res: Response) => {
     const err = error as QueryError;
     res.status(400).json({ message: err.code });
   }
+};
+
+export const login = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  const [userFound] = await dataBase.query(
+    `SELECT email, password FROM users WHERE email = ?;`,
+    [email]
+  );
+
+  const user = userFound as RowDataPacket;
+
+  res.json({ user });
 };
