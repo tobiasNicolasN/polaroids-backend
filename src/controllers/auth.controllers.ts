@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import bcryptjs from "bcryptjs";
 import { dataBase } from "../db";
-import { OkPacket, OkPacketParams } from "mysql2";
+import { OkPacket, QueryError } from "mysql2";
+import { createAccessToken } from "../libs/jwt";
 
 export const register = async (req: Request, res: Response) => {
   const { username, email, password } = req.body;
@@ -14,7 +15,9 @@ export const register = async (req: Request, res: Response) => {
       [username, email, passwordHash]
     );
     const result = rows as OkPacket;
+    const token = await createAccessToken({ id: result.insertId });
 
+    res.cookie("token", token);
     res.status(200).json({
       id: result.insertId,
       username: username,
@@ -22,7 +25,7 @@ export const register = async (req: Request, res: Response) => {
       password: passwordHash,
     });
   } catch (error) {
-    res.status(404);
-    console.log(error);
+    const err = error as QueryError;
+    res.status(400).json({ message: err.code });
   }
 };
