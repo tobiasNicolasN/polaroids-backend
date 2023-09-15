@@ -11,11 +11,10 @@ export const register = async (req: Request, res: Response) => {
   try {
     const passwordHash = await bcryptjs.hash(password, 10);
 
-    const [rows] = await dataBase.query(
+    const [result] = await dataBase.query<ResultSetHeader>(
       `INSERT INTO users(username, email, password) VALUES (?, ?, ?)`,
       [username, email, passwordHash]
     );
-    const result = rows as ResultSetHeader;
 
     const token = await createAccessToken({ id: result.insertId });
     res.cookie("token", token);
@@ -64,4 +63,9 @@ export const login = async (req: Request, res: Response) => {
     const err = error as QueryError;
     res.status(500).json({ message: err.code });
   }
+};
+
+export const logout = async (_req: Request, res: Response) => {
+  res.cookie("token", "", { expires: new Date(0) });
+  res.status(200).json({ message: "Logout successful" });
 };
