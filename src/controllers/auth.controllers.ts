@@ -35,13 +35,13 @@ export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   try {
-    const [rows] = await dataBase.query<IUsers[]>(
+    const [result] = await dataBase.query<IUsers[]>(
       `SELECT * FROM users WHERE email = ?;`,
       [email]
     );
 
-    if (rows.length > 0) {
-      const userFound = rows[0];
+    if (result.length > 0) {
+      const userFound = result[0];
 
       const isMatch = await bcryptjs.compare(password, userFound.password!);
       if (!isMatch)
@@ -68,4 +68,19 @@ export const login = async (req: Request, res: Response) => {
 export const logout = async (_req: Request, res: Response) => {
   res.cookie("token", "", { expires: new Date(0) });
   res.status(200).json({ message: "Logout successful" });
+};
+
+export const profile = async (req: Request, res: Response) => {
+  const [result] = await dataBase.query<IUsers[]>(
+    "SELECT * FROM users WHERE id = ?",
+    [req.user?.id]
+  );
+  const userFound = result[0];
+
+  res.json({
+    id: userFound.id,
+    username: userFound.username,
+    email: userFound.email,
+    createdAt: userFound.created_at,
+  });
 };
