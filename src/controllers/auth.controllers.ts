@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import bcryptjs from "bcryptjs";
 import { dataBase } from "../db";
-import { QueryError, ResultSetHeader, RowDataPacket } from "mysql2";
+import { QueryError, ResultSetHeader } from "mysql2/promise";
 import { createAccessToken } from "../libs/jwt";
+import IUsers from "../models/users.models";
 
 export const register = async (req: Request, res: Response) => {
   const { username, email, password } = req.body;
@@ -15,9 +16,10 @@ export const register = async (req: Request, res: Response) => {
       [username, email, passwordHash]
     );
     const result = rows as ResultSetHeader;
-    const token = await createAccessToken({ id: result.insertId });
 
+    const token = await createAccessToken({ id: result.insertId });
     res.cookie("token", token);
+
     res.status(200).json({
       id: result.insertId,
       username: username,
@@ -33,12 +35,33 @@ export const register = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
-  const [userFound] = await dataBase.query(
-    `SELECT email, password FROM users WHERE email = ?;`,
-    [email]
-  );
+  try {
+    const [rows] = await dataBase.query<IUsers[]>(
+      `SELECT * FROM users WHERE email = ?;`,
+      [email]
+    );
 
-  const user = userFound as RowDataPacket;
+    if (rows.length > 0) {
+      const userFound = rows[0];
 
-  res.json({ user });
+      const isMatch = await bcryptjs.compare(password, userFound.password!);
+      if (!isMatch)
+        return res.status(400).json({ message: "Incorrect password" });
+
+      const token = await createAccessToken({ id: userFound.id! });
+      res.cookie("token", token);
+
+      res.json({
+        id: userFound.id,
+        username: userFound.username,
+        email: userFound.email,
+        createdAt: userFound.created_at,
+      });
+    } else {
+      return res.status(400).json({ message: "User not found" });
+    }
+  } catch (error) {
+    const err = error as QueryError;
+    res.status(500).json({ message: err.code });
+  }
 };
