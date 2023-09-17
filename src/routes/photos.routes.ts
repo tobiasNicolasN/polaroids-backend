@@ -16,4 +16,4 @@ router.get("/photos/:id", authRequired, getPhoto);
 router.delete("/photos/:id", authRequired, deletePhoto);
 router.patch("/photos/:id", authRequired, updatePhoto);
 
-export default router
+export default router;
