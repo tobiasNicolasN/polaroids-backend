@@ -54,6 +54,16 @@ export const deletePhoto = async (req: Request, res: Response) => {
   }
 };
 
-export const updatePhoto = (_req: Request, res: Response) => {
-  res.json({ m: "5" });
+export const updatePhoto = async (req: Request, res: Response) => {
+  const { title, photo } = req.body;
+
+  const [result] = await dataBase.query<ResultSetHeader>(
+    "UPDATE photos SET title = IFNULL(?, title), photo = IFNULL(?, photo) WHERE id = ?",
+    [title, photo, req.params.id]
+  );
+  if (result.affectedRows !== 0) {
+    res.json({ message: result.info });
+  } else {
+    res.status(400).json({ message: "Photo Not found" });
+  }
 };
